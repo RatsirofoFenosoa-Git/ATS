@@ -106,7 +106,6 @@ class MiniATSStrictApp:
         return
 
       # --- Moteur de calcul strict : TF-IDF et Similarité Cosinus ---
-      # On utilise un Vectorizer avec les stop_words français pour ignorer les mots de liaison
       vectorizer = TfidfVectorizer(
           stop_words=[
               "le",
@@ -148,28 +147,31 @@ class MiniATSStrictApp:
               "for",
           ],
           lowercase=True,
-          ngram_range=(1, 2),  # Prend en compte les mots seuls et les paires (ex: "admin reseau")
+          ngram_range=(1, 2),
       )
 
-      # Transformation des textes en matrices mathématiques
       matrice_tfidf = vectorizer.fit_transform([description_poste, texte_cv])
-
-      # Calcul de la similarité cosinus (score de 0 à 1, converti en %)
       score_cosinus = cosine_similarity(matrice_tfidf[0:1], matrice_tfidf[1:2])[
-          0][0]
+          0
+      ][0]
       score_final = score_cosinus * 100
 
-      # Analyse fine des mots-clés de l'offre absents du CV
       mots_offre = set(
-          re.findall(r"\b[a-zA-Zàâäéèêëîïôöùûüç0-9]{3,}\b", description_poste.lower())
+          re.findall(
+              r"\b[a-zA-Zàâäéèêëîïôöùûüç0-9]{3,}\b", description_poste.lower()
+          )
       )
       mots_cv = set(
           re.findall(r"\b[a-zA-Zàâäéèêëîïôöùûüç0-9]{3,}\b", texte_cv.lower())
       )
       mots_manquants = sorted(list(mots_offre - mots_cv))
 
-      # Affichage des résultats stricts
-palier_couleur = "🔴 CRITIQUE" if score_final < 40 else "🟡 MOYEN" if score_final < 70 else "🟢 EXCELLENT"
+      # Correction ici : bien indenté à l'intérieur du try
+      palier_couleur = (
+          "🔴 CRITIQUE"
+          if score_final < 40
+          else "🟡 MOYEN" if score_final < 70 else "🟢 EXCELLENT"
+      )
 
       resultat_texte = (
           f"=== SCORE DE CORRESPONDANCE STRICT : {score_final:.2f}%"
@@ -201,6 +203,7 @@ palier_couleur = "🔴 CRITIQUE" if score_final < 40 else "🟡 MOYEN" if score_
           + ("...\n" if len(mots_manquants) > 35 else "\n")
       )
 
+      self.txt_resultats.delete("1.0", tk.END)
       self.txt_resultats.insert(tk.INSERT, resultat_texte)
 
     except Exception as e:
